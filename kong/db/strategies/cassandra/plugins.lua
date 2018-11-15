@@ -10,6 +10,14 @@ local fmt = string.format
 local Plugins = {}
 
 
+local function convert_foreign(row, entry_id, entry)
+  if row[entry_id] then
+    row[entry] = { id = row[entry_id] }
+    row[entry_id] = nil
+  end
+end
+
+
 -- Emulate the `select_by_cache_key` operation
 -- using the `plugins` table of a 0.14 database.
 -- @tparam string key a 0.15+ plugin cache_key
@@ -69,6 +77,11 @@ function Plugins:select_by_cache_key_migrating(key)
              row.consumer_id == parts[5] and
              row.api_id == parts[6] then
             row.config = cjson.decode(row.config)
+            row.created_at = math.floor(row.created_at / 1000)
+            convert_foreign(row, "route_id", "route")
+            convert_foreign(row, "service_id", "service")
+            convert_foreign(row, "consumer_id", "consumer")
+            convert_foreign(row, "api_id", "api")
             row.cache_key = nil
             return row
           end
